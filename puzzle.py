@@ -2,14 +2,14 @@ from PIL import Image, ImageOps
 import sys
 import os
 
-size = 64, 64
+slice_size = 32
 
 in_dir = '/home/kir/Projects/python/puzzle/in_img/'
 out_dir = '/home/kir/Projects/python/puzzle/out_img/'
 
 def resize_pic(in_name):
     img = Image.open(in_name)
-    img = ImageOps.fit(img, size, Image.ANTIALIAS)
+    img = ImageOps.fit(img, (slice_size, slice_size), Image.ANTIALIAS)
     return img
 
 def get_average_color(img):
@@ -56,7 +56,6 @@ def find_closiest(color, out_dir, list_colors):
 
 def do_the_thing(img, out_dir, color_list):
     width, heigth = img.size
-    slice_size = 64
     background = Image.new('RGB', img.size, (255,255,255))
     for y1 in range(0, heigth, slice_size):
         for x1 in range(0, width, slice_size):
@@ -71,14 +70,13 @@ def do_the_thing(img, out_dir, color_list):
             background.paste(paste_img, (x1, y1))
     background.save('out.jpg')
 
-DO_IT = True
-list_of_imgs = []
-if DO_IT == True:
-    convert_all_images(in_dir, out_dir, list_of_imgs)
-in_image = '/home/kir/Projects/python/puzzle/in.jpg'
-img = Image.open(in_image)
-print(list_of_imgs)
-do_the_thing(img, out_dir, list_of_imgs)
-#convert_all_images(in_dir, out_dir)
+if __name__ == '__main__':
+    DO_IT = True
+    list_of_imgs = []
+    if DO_IT == True:
+        convert_all_images(in_dir, out_dir, list_of_imgs)
+    in_image = '/home/kir/Projects/python/puzzle/in2.jpg'
+    img = Image.open(in_image)
+    do_the_thing(img, out_dir, list_of_imgs)
 
 
