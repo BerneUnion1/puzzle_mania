@@ -1,8 +1,10 @@
 from PIL import Image, ImageOps
 import sys
 import os
+import time
+from multiprocessing import Pool
 
-slice_size = 24
+slice_size = 32
 in_dir = '/home/kir/Projects/python/puzzle/in_img/'
 out_dir = '/home/kir/Projects/python/puzzle/out_img/'
 
@@ -37,21 +39,30 @@ def get_average_color(img):
         bAvg = b / counter
         return (rAvg, gAvg, bAvg)
 
-def convert_all_images(in_dir, out_dir, list_of_imgs):
+def get_image_paths(in_dir):
+    paths = []
     for file_ in os.listdir(in_dir):
         if DEBUG:
             print(file_)
-        img = resize_pic(in_dir + file_)
-        color = get_average_color(img)
-        img.save(str(out_dir) + str(color) + ".jpg")
-        list_of_imgs.append(color)
+        paths.append(in_dir + file_)    
+    return paths 
+
+def convert_image(path):
+    img = resize_pic(path)
+    color = get_average_color(img)
+    img.save(str(out_dir) + str(color) + ".jpg")
+
+def convert_all_images(in_dir, out_dir):
+    paths = get_image_paths(in_dir)
+    pool = Pool()
+    pool.map(convert_image, paths)
+    pool.close()
+    pool.join()
 
 def update_img_db(in_dir, out_dir):
     if DEBUG:
         print("Updating image database...")
-    img_db = []
-    convert_all_images(in_dir, out_dir, img_db)
-    return img_db
+    convert_all_images(in_dir, out_dir)
 
 def find_closiest(color, out_dir, list_colors):
     diff = 10000
@@ -100,14 +111,16 @@ def read_img_db(in_dir):
     return img_db
 
 if __name__ == '__main__':
-    DEBUG = True
-    DO_IT = False
+    start_time = time.time()
+    DEBUG = False
     if "update" in sys.argv[1:]:
-        list_of_imgs = update_img_db(in_dir, out_dir)
+        update_img_db(in_dir, out_dir)
+        list_of_imgs = read_img_db(out_dir)
     else:
         list_of_imgs = read_img_db(out_dir)
     in_image = '/home/kir/Projects/python/puzzle/in2.jpg'
     img = Image.open(in_image)
     do_the_thing(img, out_dir, list_of_imgs)
+    print("Time: %s" % (time.time() - start_time))
     print("\nDone!")
     
