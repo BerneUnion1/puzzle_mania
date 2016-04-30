@@ -21,6 +21,8 @@ $ ./puzzle.py
 ```
 
 ### Examples
+![in file2](/examples/in2.jpg)
+![out file2](/examples/out2.jpg)
 
 ![in file](/examples/in.jpg)
 ![out file](/examples/out.jpg)

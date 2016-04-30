@@ -1,18 +1,24 @@
+#!/usr/bin/env python
+
 from PIL import Image, ImageOps
+from multiprocessing import Pool
 import sys
 import os
 import time
-from multiprocessing import Pool
 
-slice_size = 32
-in_dir = '/home/kir/Projects/python/puzzle/in_img/'
-out_dir = '/home/kir/Projects/python/puzzle/out_img/'
+SLICE_SIZE = 32
+DEBUG = False
+
+in_dir = './in_img/'
+out_dir = './out_img/'
+
 
 def resize_pic(in_name):
     """Resize given image to square with slice_size:slice_size"""
     img = Image.open(in_name)
-    img = ImageOps.fit(img, (slice_size, slice_size), Image.ANTIALIAS)
+    img = ImageOps.fit(img, (SLICE_SIZE, SLICE_SIZE), Image.ANTIALIAS)
     return img
+
 
 def get_average_color(img):
     """Calculate average color of given image"""
@@ -39,6 +45,7 @@ def get_average_color(img):
         bAvg = b / counter
         return (rAvg, gAvg, bAvg)
 
+
 def get_image_paths(in_dir):
     paths = []
     for file_ in os.listdir(in_dir):
@@ -47,10 +54,12 @@ def get_image_paths(in_dir):
         paths.append(in_dir + file_)    
     return paths 
 
+
 def convert_image(path):
     img = resize_pic(path)
     color = get_average_color(img)
     img.save(str(out_dir) + str(color) + ".jpg")
+
 
 def convert_all_images(in_dir, out_dir):
     paths = get_image_paths(in_dir)
@@ -59,10 +68,12 @@ def convert_all_images(in_dir, out_dir):
     pool.close()
     pool.join()
 
+
 def update_img_db(in_dir, out_dir):
     if DEBUG:
         print("Updating image database...")
     convert_all_images(in_dir, out_dir)
+
 
 def find_closiest(color, out_dir, list_colors):
     diff = 10000
@@ -74,6 +85,8 @@ def find_closiest(color, out_dir, list_colors):
             cur_closiest = cur_color
     return cur_closiest
 
+
+
 def do_the_thing(img, out_dir, color_list):
     width, heigth = img.size
     if DEBUG:
@@ -83,10 +96,10 @@ def do_the_thing(img, out_dir, color_list):
     #go throught source image and construct final image
     total_images = 0
     print("Start pasting images...\n Images pasted:")
-    for y1 in range(0, heigth, slice_size):
-        for x1 in range(0, width, slice_size):
-            y2 = y1 + slice_size
-            x2 = x1 + slice_size
+    for y1 in range(0, heigth, SLICE_SIZE):
+        for x1 in range(0, width, SLICE_SIZE):
+            y2 = y1 + SLICE_SIZE
+            x2 = x1 + SLICE_SIZE
             #crop needed part of source image to get color
             new_img = img.crop((x1,y1,x2,y2))
             curr_color = get_average_color(new_img)
@@ -100,6 +113,7 @@ def do_the_thing(img, out_dir, color_list):
         print("Saving final image...")
     background.save('out.jpg')
 
+
 def read_img_db(in_dir):
     img_db = []
     for file_ in os.listdir(in_dir):
@@ -110,9 +124,9 @@ def read_img_db(in_dir):
         img_db.append(file_)
     return img_db
 
+
 if __name__ == '__main__':
     start_time = time.time()
-    DEBUG = False
     if "update" in sys.argv[1:]:
         update_img_db(in_dir, out_dir)
         list_of_imgs = read_img_db(out_dir)
