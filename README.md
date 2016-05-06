@@ -1,3 +1,5 @@
+[![codebeat badge](https://codebeat.co/badges/4d79217c-c0cd-4092-bf2f-169e5bbda1cc)](https://codebeat.co/projects/github-com-luminousmen-puzzle_mania)
+
 # Puzzle mania
 
 Using this script you will be able to create photographic mosaic from your pictures. 
