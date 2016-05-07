@@ -152,15 +152,19 @@ if __name__ == '__main__':
 
     if args.directory:
         IN_DIR = args.directory
-        print("IN_DIR:", IN_DIR)
+        print("IN_DIR: " + IN_DIR)
     if args.out:
         OUT_DIR = args.out
-        print("OUT_DIR:", OUT_DIR)
+        print("OUT_DIR: " + OUT_DIR)
+
+    if args.size:
+        SLICE_SIZE = args.size
+        print("Slice size: " + str(SLICE_SIZE))
 
     if args.update:
-        update_img_db()
         list_of_imgs = read_img_db()
     else:
+        update_img_db()
         list_of_imgs = read_img_db()
 
     img = Image.open(image)
