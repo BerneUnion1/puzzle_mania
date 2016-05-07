@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 
-from PIL import Image, ImageOps
-from multiprocessing import Pool
-import sys
 import os
 import time
+import argparse
+from PIL import Image, ImageOps
+from multiprocessing import Pool
 
-SLICE_SIZE = 32
 DEBUG = False
-
-in_dir = './in_img/'
-out_dir = './out_img/'
-
+SLICE_SIZE = 32
+IN_DIR = ""
+OUT_DIR = ""
 
 def resize_pic(in_name):
     """Resize given image to square with slice_size:slice_size"""
@@ -46,36 +44,36 @@ def get_average_color(img):
         return (rAvg, gAvg, bAvg)
 
 
-def get_image_paths(in_dir):
+def get_image_paths():
     paths = []
-    for file_ in os.listdir(in_dir):
+    for file_ in os.listdir(IN_DIR):
         if DEBUG:
             print(file_)
-        paths.append(in_dir + file_)    
+        paths.append(IN_DIR + file_)    
     return paths 
 
 
 def convert_image(path):
     img = resize_pic(path)
     color = get_average_color(img)
-    img.save(str(out_dir) + str(color) + ".jpg")
+    img.save(str(OUT_DIR) + str(color) + ".jpg")
 
 
-def convert_all_images(in_dir, out_dir):
-    paths = get_image_paths(in_dir)
+def convert_all_images():
+    paths = get_image_paths()
     pool = Pool()
     pool.map(convert_image, paths)
     pool.close()
     pool.join()
 
 
-def update_img_db(in_dir, out_dir):
+def update_img_db():
     if DEBUG:
         print("Updating image database...")
-    convert_all_images(in_dir, out_dir)
+    convert_all_images()
 
 
-def find_closiest(color, out_dir, list_colors):
+def find_closiest(color, list_colors):
     diff = 10000
     cur_closiest = 0
     for cur_color in list_colors:
@@ -87,24 +85,26 @@ def find_closiest(color, out_dir, list_colors):
 
 
 
-def do_the_thing(img, out_dir, color_list):
+def make_puzzle(img, color_list):
     width, heigth = img.size
     if DEBUG:
         print("Width = {}, Heigth = {}".format(width,heigth))
-    #create white background 
+    # create white background 
     background = Image.new('RGB', img.size, (255,255,255))
-    #go throught source image and construct final image
+    # go throught source image and construct final image
     total_images = 0
-    print("Start pasting images...\n Images pasted:")
+    if DEBUG:
+        print("Start pasting images...\nImages pasted:")
     for y1 in range(0, heigth, SLICE_SIZE):
         for x1 in range(0, width, SLICE_SIZE):
             y2 = y1 + SLICE_SIZE
             x2 = x1 + SLICE_SIZE
-            #crop needed part of source image to get color
-            new_img = img.crop((x1,y1,x2,y2))
-            curr_color = get_average_color(new_img)
-            close_img_name = find_closiest(curr_color, out_dir, color_list)
-            close_img_name = out_dir + str(close_img_name) + '.jpg'
+            # crop needed part of source image
+            new_img = img.crop((x1, y1, x2, y2))
+            # get average color 
+            color = get_average_color(new_img)
+            close_img_name = find_closiest(color, color_list)
+            close_img_name = OUT_DIR + str(close_img_name) + '.jpg'
             paste_img = Image.open(close_img_name)
             total_images += 1
             print("%s images \r" % total_images),
@@ -114,9 +114,9 @@ def do_the_thing(img, out_dir, color_list):
     background.save('out.jpg')
 
 
-def read_img_db(in_dir):
+def read_img_db():
     img_db = []
-    for file_ in os.listdir(in_dir):
+    for file_ in os.listdir(OUT_DIR):
         if DEBUG:
             print(file_)
         file_ = file_.split('.jpg')[0]
@@ -126,15 +126,46 @@ def read_img_db(in_dir):
 
 
 if __name__ == '__main__':
-    start_time = time.time()
-    if "update" in sys.argv[1:]:
-        update_img_db(in_dir, out_dir)
-        list_of_imgs = read_img_db(out_dir)
-    else:
-        list_of_imgs = read_img_db(out_dir)
-    in_image = '/home/kir/Projects/python/puzzle/in2.jpg'
-    img = Image.open(in_image)
-    do_the_thing(img, out_dir, list_of_imgs)
-    print("Time: %s" % (time.time() - start_time))
-    print("\nDone!")
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--image", type=str, required=True,
+                       help='input image')
+    parser.add_argument("-d", "--directory", type=str, required=True,
+                       help="source directory")
+    parser.add_argument("-o", "--out", type=str, required=True,
+                       help="out directory for cropped images")
+    parser.add_argument("-s", "--size", type=int, required=False,
+                       help="slice size")
+
+    parser.add_argument("--update", help="update images", action="store_true")
+    parser.add_argument("--debug", help="turn debug", action="store_true")
     
+    args = parser.parse_args()
+
+    start_time = time.time()
+
+    if args.image:
+        image = args.image
+
+    if args.debug:
+        DEBUG = True
+
+    if args.directory:
+        IN_DIR = args.directory
+        print("IN_DIR:", IN_DIR)
+    if args.out:
+        OUT_DIR = args.out
+        print("OUT_DIR:", OUT_DIR)
+
+    if args.update:
+        update_img_db()
+        list_of_imgs = read_img_db()
+    else:
+        list_of_imgs = read_img_db()
+
+    img = Image.open(image)
+    make_puzzle(img, list_of_imgs)
+
+    print("Time: %s" % (time.time() - start_time))
+
+    print("Done!")
